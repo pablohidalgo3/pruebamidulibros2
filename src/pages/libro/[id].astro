@@ -1,49 +1,38 @@
 ---
-import { getCollection, render } from "astro:content";
-import { SHOW_BUY_BUTTON } from "astro:env/server";
-import Layout from "../../layouts/Layout.astro"; 
-import AmazonLogo from "../../components/AmazonLogo.astro";
-import BookScore from "../../components/BookScore.astro";
-import BuyButton from "../../components/BuyButton.astro";
+import Layout from "../../layouts/Layout.astro";
+import { PLAYERS_API_ENDPOINT } from 'astro:env/server';
+import { SINGLE_PLAYER_API_ENDPOINT } from "astro:env/server";
+
+const { id } = Astro.params;
+
+const response = await fetch(`${SINGLE_PLAYER_API_ENDPOINT}`);
+
+const player = await response.json();
 
 export async function getStaticPaths() {
-  const books = await getCollection("books");
+  const response = await fetch(`${PLAYERS_API_ENDPOINT}`);
 
-  return books.map((book) => ({
-    params: { id: book.slug },
-    props: { book }
-  }))
+  const players = await response.json();
+
+  return players.map((player: { id: any }) => ({
+    params: { id: player.id },
+    props: { player },
+  }));
 }
 
-const { book } = Astro.props
-const { data, slug } = book
-const { title, author, img, readtime, description, buy } = data
-
-const { Content } = await render(book)
-
-export const prerender = true
+const { img, nickname, name } = player;
 ---
 
-<Layout title={`${title} - Dev Books`}>
+<Layout title={`A probá`}>
   <div class="flex gap-12">
     <aside class="flex flex-col items-center gap-4">
-      <a href='/' class="hover:underline opacity-70">← Volver atrás</a>
-      <img transition:name={`img-${slug}`} class="rounded w-72 h-auto" src={`/${img}`} alt={title} />
-      
-      <BookScore server:defer id={slug}>
-        <span slot="fallback" class="text-xs opacity-70">Cargando puntuación...</span>
-      </BookScore>
-
-      {
-        SHOW_BUY_BUTTON && <BuyButton server:defer buy={buy} />
-      }
+      <a href="/" class="hover:underline opacity-70">← Volver atrás</a>
+      <img
+        transition:name={`img-${nickname}`}
+        class="rounded w-72 h-auto"
+        src={img}
+      />
+      <p>{name}</p>
     </aside>
-
-    <main class="max-w-3xl">
-      <h1 transition:name={`title-${slug}`} class="text-4xl font-bold mb-4">{title}</h1>
-      <div class="prose prose-invert">
-        <Content />
-      </div>
-    </main>
   </div>
 </Layout>
